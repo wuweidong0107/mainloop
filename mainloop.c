@@ -58,7 +58,9 @@ int mainloop_add_fd(int fd, uint32_t events, mainloop_event_func callback,
     memset(data, 0, sizeof(*data));
     data->fd = fd;
     data->events = events;
+    data->callback = callback;
     data->userdata = user_data;
+    data->destroy = destroy;
     
     memset(&ev, 0, sizeof(ev));
     ev.events = events;
@@ -81,10 +83,11 @@ int mainloop_run(void)
     while (!epoll_terminate) {
         struct epoll_event events[MAX_EPOLL_EVENTS];
         int n, nfds;
+
         nfds = epoll_wait(epoll_fd, events, MAX_EPOLL_EVENTS, -1);
         if (nfds < 0)
             continue;
-        
+ 
         for(n=0; n<nfds; n++) {
             struct mainloop_data *data = events[n].data.ptr;
             data->callback(data->fd, events[n].events, data->userdata);
